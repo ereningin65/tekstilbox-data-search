@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+import time
 from io import BytesIO
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -12,8 +13,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 1. KULLANICI GİRİŞ KONTROLÜ (Şirket İçi Güvenlik)
-# Kolaylık olması açısından şifreleri doğrudan buraya tanımladık. İstediğiniz gibi değiştirebilirsiniz.
+# KULLANICI GİRİŞ KONTROLÜ
 AUTHORIZED_USERS = {
     "admin": "tekstilbox2026",
     "satis1": "satis2026",
@@ -23,7 +23,6 @@ AUTHORIZED_USERS = {
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state["password_correct"] = False
-
     if st.session_state["password_correct"]:
         return True
 
@@ -40,32 +39,88 @@ def check_password():
                 st.error("❌ Hatalı kullanıcı adı veya şifre!")
     return False
 
+# Web sitesi bulma fonksiyonu (SerpApi ile web sitesini Google'dan dolaylı bulur)
+def find_company_website(company_name, country_code, api_key):
+    try:
+        search_url = "https://serpapi.com/search"
+        params = {
+            "engine": "google",
+            "q": f"{company_name} official website {country_code}",
+            "gl": country_code.lower(),
+            "num": "3",
+            "api_key": api_key
+        }
+        res = requests.get(search_url, params=params).json()
+        results = res.get("organic_results", [])
+        for r in results:
+            link = r.get("link", "")
+            if not any(x in link for x in ["linkedin.com", "facebook.com", "instagram.com", "twitter.com", "youtube.com", "yelp.", "tripadvisor."]):
+                return link.split("/")[2] if "://" in link else link
+    except:
+        pass
+    return "LinkedIn sayfasından manuel kontrol edin"
+
 if check_password():
-    # Sidebar - Ayarlar ve API Anahtarı
     st.sidebar.image("https://www.tekstilbox.com/wp-content/uploads/2021/04/cropped-tekstilbox-logo-black-1.png", width=200)
     st.sidebar.title("⚙️ Ayarlar")
     
-    # Kullanıcının kod bilmeden kendi API anahtarını girebilmesi için alan
     serpapi_key = st.sidebar.text_input(
         "SerpApi Anahtarınız (API Key)", 
-        type="password", 
-        help="serpapi.com sitesinden ücretsiz veya ücretli aldığınız anahtarı buraya yapıştırın."
+        type="password"
     )
     
     st.sidebar.markdown("---")
-    st.sidebar.markdown("### 📌 Nasıl Çalışır?")
-    st.sidebar.info(
-        "1. Ülkeyi ve hedef kitleyi seçin.\n"
-        "2. Kelimelerinizi belirleyip aramayı başlatın.\n"
-        "3. Sistem Google üzerinden LinkedIn sayfalarını yerel dilde tarar.\n"
-        "4. Excel (.xlsx) dosyasını indirip firmaları inceleyin."
-    )
+    st.sidebar.info("Tüm Avrupa Sürümü: 40+ Avrupa ülkesi, yerel LinkedIn subdomainleri ve gelişmiş dil kütüphanesi aktif.")
 
     st.title("🎯 Tekstilbox & EasyExpo B2B Arama Motoru")
-    st.write("Hedef kitle bazlı, akıllı yerel dil çevirili ve filtreli müşteri bulma programı.")
 
-    # 2. SÖZLÜK VE KELİME KÜTÜPHANESİ
-    # İleride yeni diller veya kelimeler eklemek için bu yapıyı genişletebilirsiniz
+    # Tüm Avrupa Ülkeleri ve LinkedIn Subdomain Eşleştirmeleri
+    EUROPEAN_COUNTRIES = {
+        "Almanya (DE)": {"code": "DE", "domain": "de.linkedin.com/company/"},
+        "Avusturya (AT)": {"code": "AT", "domain": "at.linkedin.com/company/"},
+        "Arnavutluk (AL)": {"code": "AL", "domain": "al.linkedin.com/company/"},
+        "Andorra (AD)": {"code": "AD", "domain": "linkedin.com/company/"},
+        "Belçika (BE)": {"code": "BE", "domain": "be.linkedin.com/company/"},
+        "Birleşik Krallık / İngiltere (GB)": {"code": "GB", "domain": "uk.linkedin.com/company/"},
+        "Bosna Hersek (BA)": {"code": "BA", "domain": "ba.linkedin.com/company/"},
+        "Bulgaristan (BG)": {"code": "BG", "domain": "bg.linkedin.com/company/"},
+        "Çek Cumhuriyeti (CZ)": {"code": "CZ", "domain": "cz.linkedin.com/company/"},
+        "Danimarka (DK)": {"code": "DK", "domain": "dk.linkedin.com/company/"},
+        "Estonya (EE)": {"code": "EE", "domain": "ee.linkedin.com/company/"},
+        "Finlandiya (FI)": {"code": "FI", "domain": "fi.linkedin.com/company/"},
+        "Fransa (FR)": {"code": "FR", "domain": "fr.linkedin.com/company/"},
+        "Hırvatistan (HR)": {"code": "HR", "domain": "hr.linkedin.com/company/"},
+        "Hollanda (NL)": {"code": "NL", "domain": "nl.linkedin.com/company/"},
+        "İrlanda (IE)": {"code": "IE", "domain": "ie.linkedin.com/company/"},
+        "İspanya (ES)": {"code": "ES", "domain": "es.linkedin.com/company/"},
+        "İsveç (SE)": {"code": "SE", "domain": "se.linkedin.com/company/"},
+        "İsviçre (CH)": {"code": "CH", "domain": "ch.linkedin.com/company/"},
+        "İtalya (IT)": {"code": "IT", "domain": "it.linkedin.com/company/"},
+        "İzlanda (IS)": {"code": "IS", "domain": "is.linkedin.com/company/"},
+        "Kosova (XK)": {"code": "XK", "domain": "linkedin.com/company/"},
+        "Letonya (LV)": {"code": "LV", "domain": "lv.linkedin.com/company/"},
+        "Lihtenştayn (LI)": {"code": "LI", "domain": "linkedin.com/company/"},
+        "Litvanya (LT)": {"code": "LT", "domain": "lt.linkedin.com/company/"},
+        "Lüksemburg (LU)": {"code": "LU", "domain": "lu.linkedin.com/company/"},
+        "Macaristan (HU)": {"code": "HU", "domain": "hu.linkedin.com/company/"},
+        "Kuzey Makedonya (MK)": {"code": "MK", "domain": "mk.linkedin.com/company/"},
+        "Malta (MT)": {"code": "MT", "domain": "mt.linkedin.com/company/"},
+        "Moldova (MD)": {"code": "MD", "domain": "md.linkedin.com/company/"},
+        "Monako (MC)": {"code": "MC", "domain": "linkedin.com/company/"},
+        "Karadağ (ME)": {"code": "ME", "domain": "me.linkedin.com/company/"},
+        "Norveç (NO)": {"code": "NO", "domain": "no.linkedin.com/company/"},
+        "Polonya (PL)": {"code": "PL", "domain": "pl.linkedin.com/company/"},
+        "Portekiz (PT)": {"code": "PT", "domain": "pt.linkedin.com/company/"},
+        "Romanya (RO)": {"code": "RO", "domain": "ro.linkedin.com/company/"},
+        "Sırbistan (RS)": {"code": "RS", "domain": "rs.linkedin.com/company/"},
+        "Slovakya (SK)": {"code": "SK", "domain": "sk.linkedin.com/company/"},
+        "Slovenya (SI)": {"code": "SI", "domain": "si.linkedin.com/company/"},
+        "Türkiye (TR)": {"code": "TR", "domain": "tr.linkedin.com/company/"},
+        "Ukrayna (UA)": {"code": "UA", "domain": "ua.linkedin.com/company/"},
+        "Yunanistan (GR)": {"code": "GR", "domain": "gr.linkedin.com/company/"}
+    }
+
+    # Gelişmiş Çoklu Dil Sözlüğü (En sık kullanılan Avrupa dilleri)
     LOCAL_DICTIONARY = {
         "FR": {
             "shopfitter": "agenceur",
@@ -89,6 +144,20 @@ if check_password():
             "fabric": "textilfalwand",
             "stand": "messestand"
         },
+        "AT": {  # Avusturya (Almanca ile aynı)
+            "shopfitter": "ladenbauer",
+            "lightbox": "leuchtkasten",
+            "retail design": "ladenbau design",
+            "shopfitting": "ladeneinrichtung",
+            "signage": "beschilderung",
+            "sign": "schilder"
+        },
+        "CH": {  # İsviçre (Almanca ve Fransızca ortak)
+            "shopfitter": "ladenbauer",
+            "lightbox": "leuchtkasten",
+            "retail design": "ladenbau design",
+            "shopfitting": "ladeneinrichtung"
+        },
         "NL": {
             "shopfitter": "winkelinterieurbouw",
             "lightbox": "lichtbak",
@@ -110,18 +179,57 @@ if check_password():
             "profile": "profilo",
             "fabric": "tessuto",
             "stand": "stand fieristico"
+        },
+        "ES": {
+            "shopfitter": "instalador de tiendas",
+            "lightbox": "caja de luz",
+            "retail design": "diseño comercial",
+            "shopfitting": "equipamiento comercial",
+            "signage": "señalización",
+            "sign": "rótulo",
+            "profile": "perfil",
+            "fabric": "tela",
+            "stand": "stand ferial"
+        },
+        "PT": {
+            "shopfitter": "instalador de lojas",
+            "lightbox": "caixa de luz",
+            "retail design": "design de retalho",
+            "shopfitting": "equipamento comercial",
+            "signage": "sinalização",
+            "sign": "letreiro"
+        },
+        "PL": {
+            "shopfitter": "wyposażenie sklepów",
+            "lightbox": "kaseton świetlny",
+            "retail design": "projektowanie sklepów",
+            "signage": "oznakowanie",
+            "sign": "szyld"
+        },
+        "TR": {
+            "shopfitter": "mağaza dekorasyon",
+            "lightbox": "ışıklı tabela",
+            "retail design": "mağaza tasarımı",
+            "shopfitting": "mağaza donanımları",
+            "signage": "yönlendirme tabelaları",
+            "sign": "tabela",
+            "profile": "profil",
+            "fabric": "kumaş",
+            "stand": "fuar standı"
         }
     }
 
-    # 3. DİNAMİK SEÇİM ARABİRİMİ
     col_left, col_right = st.columns([1, 2])
 
     with col_left:
-        country = st.selectbox(
+        # Tüm Avrupa ülkeleri listeleniyor
+        selected_country_name = st.selectbox(
             "1. Hedef Ülke Seçin", 
-            ["Fransa (FR)", "Almanya (DE)", "İngiltere (GB)", "Hollanda (NL)", "İtalya (IT)"]
+            list(EUROPEAN_COUNTRIES.keys())
         )
-        country_code = country.split("(")[1].replace(")", "")
+        country_info = EUROPEAN_COUNTRIES[selected_country_name]
+        country_code = country_info["code"]
+        linkedin_subdomain = country_info["domain"]
 
         hedef_kitle = st.selectbox(
             "2. Hedef Kitle Seçin", 
@@ -130,21 +238,10 @@ if check_password():
 
         keywords_to_search = []
 
-        # Koşullu Seçenekler
         if hedef_kitle == "Shopfitter":
-            keywords_to_search = st.multiselect(
-                "Aranacak Anahtar Kelimeler (En az 1 adet seçin)",
-                ["shopfitter", "lightbox", "retail design", "shopfitting"],
-                default=["shopfitter", "lightbox"]
-            )
-            
+            keywords_to_search = st.multiselect("Aranacak Anahtar Kelimeler", ["shopfitter", "lightbox", "retail design", "shopfitting"], default=["shopfitter"])
         elif hedef_kitle == "Signage/Sign":
-            keywords_to_search = st.multiselect(
-                "Aranacak Anahtar Kelimeler",
-                ["lightbox", "signage", "sign"],
-                default=["lightbox", "sign"]
-            )
-
+            keywords_to_search = st.multiselect("Aranacak Anahtar Kelimeler", ["lightbox", "signage", "sign"], default=["lightbox"])
         elif hedef_kitle == "Producer":
             producer_type = st.radio("Ürün Grubu Seçin", ["Profil", "Kumaş", "LED"])
             if producer_type == "Profil":
@@ -153,13 +250,8 @@ if check_password():
                 keywords_to_search = st.multiselect("Kumaş Seçenekleri", ["SEG Fabric", "UV Fabric", "Dye-Sub Fabric", "Sublimation Fabric"])
             elif producer_type == "LED":
                 keywords_to_search = st.multiselect("LED Seçenekleri", ["module led", "lightbox led"])
-
         elif hedef_kitle == "Print house":
-            keywords_to_search = st.multiselect(
-                "Baskı Teknolojileri Seçin",
-                ["Digital Printing", "UV printing", "Dye-Sub printing", "Sublimation printing", "large format printing"]
-            )
-
+            keywords_to_search = st.multiselect("Baskı Teknolojileri Seçin", ["Digital Printing", "UV printing", "Dye-Sub printing", "Sublimation printing", "large format printing"])
         elif hedef_kitle == "Modular Exhibition Systems":
             moduler_type = st.radio("Sistem Seçin", ["xPowall+", "EES"])
             if moduler_type == "xPowall+":
@@ -173,125 +265,128 @@ if check_password():
         if not keywords_to_search:
             st.warning("Lütfen sol taraftan en az bir anahtar kelime seçin.")
         else:
-            # Arama Sorgusunu Oluşturma (Yerel Dil Entegrasyonu)
             query_parts = []
             local_dict = LOCAL_DICTIONARY.get(country_code, {})
             
             for kw in keywords_to_search:
                 local_kw = local_dict.get(kw.lower())
                 if local_kw and local_kw != kw.lower():
-                    # Hem İngilizce hem Yerel Dilde Aratır: ("lightbox" OR "caisson lumineux")
                     query_parts.append(f'("{kw}" OR "{local_kw}")')
                 else:
                     query_parts.append(f'"{kw}"')
                     
-            search_query = f"site:linkedin.com/company/ " + " AND ".join(query_parts)
+            search_query = f"site:{linkedin_subdomain} " + " AND ".join(query_parts)
             
             st.code(f"Oluşturulan Google Arama Sorgusu:\n{search_query}", language="text")
             
-            # Arama Butonu
             if st.button("Müşterileri Bul 🚀", use_container_width=True):
                 if not serpapi_key:
                     st.error("⚠️ Lütfen sol menüdeki 'Ayarlar' kısmından SerpApi anahtarınızı girin!")
                 else:
-                    st.info("🔄 Google verileri taranıyor, bu işlem yaklaşık 5-10 saniye sürebilir...")
+                    st.info("🔄 Google verileri derinlemesine taranıyor. Çoklu sayfalar taranacağı için bu işlem 15-30 saniye sürebilir...")
                     
-                    # API Parametreleri
-                    url = "https://serpapi.com/search"
-                    params = {
-                        "engine": "google",
-                        "q": search_query,
-                        "gl": country_code.lower(),
-                        "num": "100",  # Google'dan en iyi 100 sonucu çekiyoruz
-                        "api_key": serpapi_key
-                    }
-                    
-                    try:
-                        response = requests.get(url, params=params)
-                        data = response.json()
-                        results = data.get("organic_results", [])
+                    leads = []
+                    # 100 sonuca ulaşmak için Google'ın ilk 3 sayfasını (0, 10, 20 parametreleriyle) tarıyoruz
+                    for page in range(0, 3):
+                        url = "https://serpapi.com/search"
+                        params = {
+                            "engine": "google",
+                            "q": search_query,
+                            "gl": country_code.lower(),
+                            "start": str(page * 10),
+                            "num": "10",
+                            "api_key": serpapi_key
+                        }
                         
-                        leads = []
-                        for result in results:
-                            linkedin_url = result.get("link")
-                            if "linkedin.com/company/" in linkedin_url:
-                                raw_title = result.get("title")
-                                # Başlıktan temiz şirket ismi çıkarma (Gereksiz kısımları temizler)
-                                clean_title = raw_title.split(":")[0].split("|")[0].split("-")[0].strip()
-                                
-                                # Web sitesi çıkarma denemesi (snippet veya Google verisinden)
-                                snippet = result.get("snippet", "")
-                                
-                                leads.append({
-                                    "Ülke": country_code,
-                                    "Firma İsmi": clean_title,
-                                    "Web Sitesi": "Lütfen siteyi incelemek için aratın veya LinkedIn sayfasından bakın",
-                                    "LinkedIn Sayfası Linki": linkedin_url
-                                })
-                        
-                        if leads:
-                            df = pd.DataFrame(leads)
-                            st.success(f"🎉 Başarılı! Toplam {len(df)} adet potansiyel firma listelendi.")
-                            st.dataframe(df, use_container_width=True)
+                        try:
+                            response = requests.get(url, params=params)
+                            data = response.json()
+                            results = data.get("organic_results", [])
                             
-                            # Excel'i bellekte profesyonelce biçimlendirme
-                            output = BytesIO()
-                            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                                df.to_excel(writer, index=False, sheet_name="Müşteri Listesi")
+                            if not results:
+                                break
                                 
-                                # Excel Görsel Tasarımı (openpyxl kullanarak)
-                                workbook = writer.book
-                                worksheet = writer.sheets["Müşteri Listesi"]
-                                
-                                # Başlık satırı stili (Lacivert arka plan, beyaz kalın yazı)
-                                header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
-                                header_font = Font(name="Arial", size=11, bold=True, color="FFFFFF")
-                                center_align = Alignment(horizontal="center", vertical="center")
-                                left_align = Alignment(horizontal="left", vertical="center")
-                                
-                                # Hücre kenarlıkları
-                                thin_border = Border(
-                                    left=Side(style='thin', color='D3D3D3'),
-                                    right=Side(style='thin', color='D3D3D3'),
-                                    top=Side(style='thin', color='D3D3D3'),
-                                    bottom=Side(style='thin', color='D3D3D3')
-                                )
-                                
-                                # Başlıkları stillendir
-                                for col_idx, col in enumerate(df.columns, 1):
-                                    cell = worksheet.cell(row=1, column=col_idx)
-                                    cell.fill = header_fill
-                                    cell.font = header_font
-                                    cell.alignment = center_align
-                                    cell.border = thin_border
-                                
-                                # Verileri ve sütun genişliklerini ayarla
-                                for row in worksheet.iter_rows(min_row=2, max_row=len(df)+1, min_col=1, max_col=4):
-                                    for cell in row:
-                                        cell.font = Font(name="Arial", size=10)
-                                        cell.border = thin_border
-                                        if cell.column == 1:  # Ülke sütununu ortala
-                                            cell.alignment = center_align
-                                        else:
-                                            cell.alignment = left_align
-                                
-                                # Sütun genişliklerini otomatik genişlet
-                                for col in worksheet.columns:
-                                    max_len = max(len(str(cell.value or '')) for cell in col)
-                                    col_letter = openpyxl.utils.get_column_letter(col[0].column)
-                                    worksheet.column_dimensions[col_letter].width = max(max_len + 3, 12)
+                            for result in results:
+                                linkedin_url = result.get("link", "")
+                                if "linkedin.com/company/" in linkedin_url:
+                                    raw_title = result.get("title", "Bilinmeyen Firma")
+                                    clean_title = raw_title.split(":")[0].split("|")[0].split("-")[0].strip()
                                     
-                            excel_data = output.getvalue()
+                                    if not any(lead['LinkedIn Sayfası Linki'] == linkedin_url for lead in leads):
+                                        leads.append({
+                                            "Ülke": country_code,
+                                            "Firma İsmi": clean_title,
+                                            "Web Sitesi": "Aranıyor...",
+                                            "LinkedIn Sayfası Linki": linkedin_url
+                                        })
+                            time.sleep(1)
+                        except Exception as e:
+                            st.error(f"Sayfa {page+1} taranırken hata oluştu: {e}")
+                            break
+                    
+                    if leads:
+                        st.info("🌐 Bulunan firmaların web siteleri tespit ediliyor, lütfen bekleyin...")
+                        progress_bar = st.progress(0)
+                        
+                        for idx, lead in enumerate(leads):
+                            website = find_company_website(lead["Firma İsmi"], country_code, serpapi_key)
+                            lead["Web Sitesi"] = website
+                            progress_bar.progress((idx + 1) / len(leads))
+                            time.sleep(0.5)
+                        
+                        df = pd.DataFrame(leads)
+                        st.success(f"🎉 Başarılı! Toplam {len(df)} adet potansiyel firma listelendi.")
+                        st.dataframe(df, use_container_width=True)
+                        
+                        # Excel'i bellekte profesyonelce biçimlendirme
+                        output = BytesIO()
+                        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                            df.to_excel(writer, index=False, sheet_name="Müşteri Listesi")
                             
-                            st.download_button(
-                                label="📥 Excel Dosyasını İndir (.xlsx)",
-                                data=excel_data,
-                                file_name=f"B2B_Leads_{hedef_kitle}_{country_code}.xlsx",
-                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                use_container_width=True
+                            workbook = writer.book
+                            worksheet = writer.sheets["Müşteri Listesi"]
+                            
+                            header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
+                            header_font = Font(name="Arial", size=11, bold=True, color="FFFFFF")
+                            center_align = Alignment(horizontal="center", vertical="center")
+                            left_align = Alignment(horizontal="left", vertical="center")
+                            
+                            thin_border = Border(
+                                left=Side(style='thin', color='D3D3D3'),
+                                right=Side(style='thin', color='D3D3D3'),
+                                top=Side(style='thin', color='D3D3D3'),
+                                bottom=Side(style='thin', color='D3D3D3')
                             )
-                        else:
-                            st.warning("⚠️ Seçtiğiniz kriterlere uygun şirket bulunamadı. Anahtar kelimeleri azaltmayı veya değiştirmeyi deneyebilirsiniz.")
                             
-                    except Exception as e:
-                        st.error(f"Sorgu sırasında bir hata oluştu: {e}")
+                            for col_idx, col in enumerate(df.columns, 1):
+                                cell = worksheet.cell(row=1, column=col_idx)
+                                cell.fill = header_fill
+                                cell.font = header_font
+                                cell.alignment = center_align
+                                cell.border = thin_border
+                            
+                            for row in worksheet.iter_rows(min_row=2, max_row=len(df)+1, min_col=1, max_col=4):
+                                for cell in row:
+                                    cell.font = Font(name="Arial", size=10)
+                                    cell.border = thin_border
+                                    if cell.column == 1:
+                                        cell.alignment = center_align
+                                    else:
+                                        cell.alignment = left_align
+                            
+                            for col in worksheet.columns:
+                                max_len = max(len(str(cell.value or '')) for cell in col)
+                                col_letter = openpyxl.utils.get_column_letter(col[0].column)
+                                worksheet.column_dimensions[col_letter].width = max(max_len + 3, 12)
+                                
+                        excel_data = output.getvalue()
+                        
+                        st.download_button(
+                            label="📥 Excel Dosyasını İndir (.xlsx)",
+                            data=excel_data,
+                            file_name=f"B2B_Leads_{hedef_kitle}_{country_code}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            use_container_width=True
+                        )
+                    else:
+                        st.warning("⚠️ Seçtiğiniz kriterlere uygun şirket bulunamadı. Anahtar kelimeleri değiştirmeyi deneyebilirsiniz.")
