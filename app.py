@@ -42,7 +42,7 @@ def check_password():
 
 if check_password():
     # Sidebar - Ayarlar ve API Anahtarı
-    st.sidebar.image("https://www.tekstilbox.com/wp-content/uploads/2021/04/cropped-tekstilbox-logo-black-1.png", width=200, errors="ignore")
+    st.sidebar.image("https://www.tekstilbox.com/wp-content/uploads/2021/04/cropped-tekstilbox-logo-black-1.png", width=200)
     st.sidebar.title("⚙️ Ayarlar")
     
     # Kullanıcının kod bilmeden kendi API anahtarını girebilmesi için alan
