@@ -70,7 +70,7 @@ if check_password():
     )
     
     st.sidebar.markdown("---")
-    st.sidebar.info("Tüm Avrupa Sürümü: 40+ Avrupa ülkesi, yerel LinkedIn subdomainleri ve gelişmiş dil kütüphanesi aktif.")
+    st.sidebar.info("Tüm Avrupa Sürümü: 40+ Avrupa ülkesi, yerel LinkedIn subdomainleri, 100 sayfa tarama ve gelişmiş dil kütüphanesi aktif.")
 
     st.title("🎯 Tekstilbox & EasyExpo B2B Arama Motoru")
 
@@ -120,103 +120,39 @@ if check_password():
         "Yunanistan (GR)": {"code": "GR", "domain": "gr.linkedin.com/company/"}
     }
 
-    # Gelişmiş Çoklu Dil Sözlüğü (En sık kullanılan Avrupa dilleri)
+    # TÜM AVRUPA İÇİN GELİŞMİŞ ÇOKLU DİL SÖZLÜĞÜ (40+ Ülke)
     LOCAL_DICTIONARY = {
-        "FR": {
-            "shopfitter": "agenceur",
-            "lightbox": "caisson lumineux",
-            "retail design": "architecture commerciale",
-            "shopfitting": "agencement de magasin",
-            "signage": "signalétique",
-            "sign": "enseigne",
-            "profile": "profilé",
-            "fabric": "tissu",
-            "stand": "stand d'exposition"
-        },
-        "DE": {
-            "shopfitter": "ladenbauer",
-            "lightbox": "leuchtkasten",
-            "retail design": "ladenbau design",
-            "shopfitting": "ladeneinrichtung",
-            "signage": "beschilderung",
-            "sign": "schilder",
-            "profile": "profile",
-            "fabric": "textilfalwand",
-            "stand": "messestand"
-        },
-        "AT": {  # Avusturya (Almanca ile aynı)
-            "shopfitter": "ladenbauer",
-            "lightbox": "leuchtkasten",
-            "retail design": "ladenbau design",
-            "shopfitting": "ladeneinrichtung",
-            "signage": "beschilderung",
-            "sign": "schilder"
-        },
-        "CH": {  # İsviçre (Almanca ve Fransızca ortak)
-            "shopfitter": "ladenbauer",
-            "lightbox": "leuchtkasten",
-            "retail design": "ladenbau design",
-            "shopfitting": "ladeneinrichtung"
-        },
-        "NL": {
-            "shopfitter": "winkelinterieurbouw",
-            "lightbox": "lichtbak",
-            "retail design": "retail design",
-            "shopfitting": "winkelindeling",
-            "signage": "bewegwijzering",
-            "sign": "borden",
-            "profile": "profiel",
-            "fabric": "stof",
-            "stand": "beursstand"
-        },
-        "IT": {
-            "shopfitter": "allestitore",
-            "lightbox": "cassonetto luminoso",
-            "retail design": "progettazione negozi",
-            "shopfitting": "allestimento negozi",
-            "signage": "segnaletica",
-            "sign": "insegna",
-            "profile": "profilo",
-            "fabric": "tessuto",
-            "stand": "stand fieristico"
-        },
-        "ES": {
-            "shopfitter": "instalador de tiendas",
-            "lightbox": "caja de luz",
-            "retail design": "diseño comercial",
-            "shopfitting": "equipamiento comercial",
-            "signage": "señalización",
-            "sign": "rótulo",
-            "profile": "perfil",
-            "fabric": "tela",
-            "stand": "stand ferial"
-        },
-        "PT": {
-            "shopfitter": "instalador de lojas",
-            "lightbox": "caixa de luz",
-            "retail design": "design de retalho",
-            "shopfitting": "equipamento comercial",
-            "signage": "sinalização",
-            "sign": "letreiro"
-        },
-        "PL": {
-            "shopfitter": "wyposażenie sklepów",
-            "lightbox": "kaseton świetlny",
-            "retail design": "projektowanie sklepów",
-            "signage": "oznakowanie",
-            "sign": "szyld"
-        },
-        "TR": {
-            "shopfitter": "mağaza dekorasyon",
-            "lightbox": "ışıklı tabela",
-            "retail design": "mağaza tasarımı",
-            "shopfitting": "mağaza donanımları",
-            "signage": "yönlendirme tabelaları",
-            "sign": "tabela",
-            "profile": "profil",
-            "fabric": "kumaş",
-            "stand": "fuar standı"
-        }
+        "FR": { "shopfitter": "agenceur", "lightbox": "caisson lumineux", "retail design": "architecture commerciale", "shopfitting": "agencement de magasin", "signage": "signalétique", "sign": "enseigne", "profile": "profilé", "fabric": "tissu", "stand": "stand d'exposition" },
+        "DE": { "shopfitter": "ladenbauer", "lightbox": "leuchtkasten", "retail design": "ladenbau design", "shopfitting": "ladeneinrichtung", "signage": "beschilderung", "sign": "schilder", "profile": "profile", "fabric": "textilfalwand", "stand": "messestand" },
+        "AT": { "shopfitter": "ladenbauer", "lightbox": "leuchtkasten", "retail design": "ladenbau design", "shopfitting": "ladeneinrichtung", "signage": "beschilderung", "sign": "schilder", "profile": "profile", "fabric": "textilfalwand", "stand": "messestand" },
+        "CH": { "shopfitter": "ladenbauer", "lightbox": "leuchtkasten", "retail design": "ladenbau design", "shopfitting": "ladeneinrichtung", "signage": "beschilderung", "sign": "schilder", "profile": "profile", "fabric": "textilfalwand", "stand": "messestand" },
+        "NL": { "shopfitter": "winkelinterieurbouw", "lightbox": "lichtbak", "retail design": "retail design", "shopfitting": "winkelindeling", "signage": "bewegwijzering", "sign": "borden", "profile": "profiel", "fabric": "stof", "stand": "beursstand" },
+        "BE": { "shopfitter": "winkelinterieurbouw", "lightbox": "lichtbak", "retail design": "retail design", "shopfitting": "winkelindeling", "signage": "bewegwijzering", "sign": "borden", "profile": "profiel", "fabric": "stof", "stand": "beursstand" },
+        "IT": { "shopfitter": "allestitore", "lightbox": "cassonetto luminoso", "retail design": "progettazione negozi", "shopfitting": "allestimento negozi", "signage": "segnaletica", "sign": "insegna", "profile": "profilo", "fabric": "tessuto", "stand": "stand fieristico" },
+        "ES": { "shopfitter": "instalador de tiendas", "lightbox": "caja de luz", "retail design": "diseño comercial", "shopfitting": "equipamiento comercial", "signage": "señalización", "sign": "rótulo", "profile": "perfil", "fabric": "tela", "stand": "stand ferial" },
+        "PT": { "shopfitter": "instalador de lojas", "lightbox": "caixa de luz", "retail design": "design de retalho", "shopfitting": "equipamento comercial", "signage": "sinalização", "sign": "letreiro", "profile": "perfil", "fabric": "tecido", "stand": "stand de feira" },
+        "PL": { "shopfitter": "wyposażenie sklepów", "lightbox": "kaseton świetlny", "retail design": "projektowanie sklepów", "shopfitting": "aranżacja sklepów", "signage": "oznakowanie", "sign": "szyld", "profile": "profil", "fabric": "tkanina", "stand": "stoisko targowe" },
+        "TR": { "shopfitter": "mağaza dekorasyon", "lightbox": "ışıklı tabela", "retail design": "mağaza tasarımı", "shopfitting": "mağaza donanımları", "signage": "yönlendirme tabelaları", "sign": "tabela", "profile": "profil", "fabric": "kumaş", "stand": "fuar standı" },
+        "LV": { "shopfitter": "veikalu aprīkojums", "lightbox": "gaismas kastes", "retail design": "mazumtirdzniecības dizains", "shopfitting": "veikalu iekārtošana", "signage": "izkārtnes", "sign": "izkārtne", "profile": "profils", "fabric": "audums", "stand": "stends" },
+        "SE": { "shopfitter": "butiksinredning", "lightbox": "ljuslåda", "retail design": "butiksdesign", "shopfitting": "butiksutrustning", "signage": "skyltning", "sign": "skylt", "profile": "profil", "fabric": "tyg", "stand": "monter" },
+        "NO": { "shopfitter": "butikkinnredning", "lightbox": "lyskasse", "retail design": "butikkdesign", "shopfitting": "butikkutstyr", "signage": "skilting", "sign": "skilt", "profile": "profil", "fabric": "stoff", "stand": "messestand" },
+        "DK": { "shopfitter": "butiksinventar", "lightbox": "lyskasse", "retail design": "butiksdesign", "shopfitting": "butiksindretning", "signage": "skiltning", "sign": "skilt", "profile": "profil", "fabric": "stof", "stand": "messebod" },
+        "FI": { "shopfitter": "myymäläkalusteet", "lightbox": "valokaappi", "retail design": "myymäläsuunnittelu", "shopfitting": "myymäläkalustus", "signage": "opasteet", "sign": "kyltti", "profile": "profiili", "fabric": "kangas", "stand": "messuosasto" },
+        "RO": { "shopfitter": "amenajari comerciale", "lightbox": "caseta luminoasa", "retail design": "design retail", "shopfitting": "mobilier comercial", "signage": "semnalistica", "sign": "firma luminoasa", "profile": "profil", "fabric": "material textil", "stand": "stand expozitional" },
+        "CZ": { "shopfitter": "vybavení obchodů", "lightbox": "světelný box", "retail design": "retail design", "shopfitting": "vybavení prodejen", "signage": "značení", "sign": "nápis", "profile": "profil", "fabric": "látka", "stand": "výstavní stánek" },
+        "SK": { "shopfitter": "vybavenie obchodov", "lightbox": "svetelný box", "retail design": "dizajn predajní", "shopfitting": "zariadenie predajní", "signage": "značenie", "sign": "nápis", "profile": "profil", "fabric": "látka", "stand": "výstavný stánok" },
+        "HU": { "shopfitter": "üzletberendezés", "lightbox": "világítótábla", "retail design": "üzlettervezés", "shopfitting": "üzletkialakítás", "signage": "cégér", "sign": "tábla", "profile": "profil", "fabric": "szövet", "stand": "kiállítási stand" },
+        "BG": { "shopfitter": "обзавеждане за магазини", "lightbox": "светеща кутия", "retail design": "ритейл дизайн", "shopfitting": "интериор на магазин", "signage": "сигналистика", "sign": "табела", "profile": "профил", "fabric": "плат", "stand": "изложбен щанд" },
+        "GR": { "shopfitter": "εξοπλισμός καταστημάτων", "lightbox": "φωτεινή επιγραφή", "retail design": "σχεδιασμός καταστημάτων", "shopfitting": "επίπλωση καταστημάτων", "signage": "σήμανση", "sign": "πινακίδα", "profile": "προφίλ", "fabric": "ύφασμα", "stand": "εκθεσιακό περίπτερο" },
+        "EE": { "shopfitter": "kaupluse sisustus", "lightbox": "valguskast", "retail design": "jaekaubanduse disain", "shopfitting": "kaupluse sisustamine", "signage": "sildid", "sign": "silt", "profile": "profiil", "fabric": "kangas", "stand": "messiboks" },
+        "LT": { "shopfitter": "parduotuvių įranga", "lightbox": "šviesdėžė", "retail design": "mažmeninės prekybos dizainas", "shopfitting": "parduotuvių įrengimas", "signage": "iškabos", "sign": "iškaba", "profile": "profilis", "fabric": "audinys", "stand": "parodų stendas" },
+        "HR": { "shopfitter": "opremanje trgovina", "lightbox": "svjetleća reklama", "retail design": "dizajn interijera trgovina", "shopfitting": "uređenje trgovine", "signage": "oznake", "sign": "natpis", "profile": "profil", "fabric": "tkanina", "stand": "izložbeni štand" },
+        "BA": { "shopfitter": "opremanje trgovina", "lightbox": "svjetleća reklama", "retail design": "dizajn interijera trgovina", "shopfitting": "uređenje trgovine", "signage": "oznake", "sign": "natpis", "profile": "profil", "fabric": "tkanina", "stand": "izložbeni štand" },
+        "RS": { "shopfitter": "opremanje prodavnica", "lightbox": "svetleća reklama", "retail design": "dizajn enterijera", "shopfitting": "uređenje lokala", "signage": "oznake", "sign": "natpis", "profile": "profil", "fabric": "tkanina", "stand": "izložbeni štand" },
+        "SI": { "shopfitter": "oprema trgovin", "lightbox": "svetlobna tabla", "retail design": "oblikovanje trgovin", "shopfitting": "ureditev trgovine", "signage": "označevanje", "sign": "napis", "profile": "profil", "fabric": "tkanina", "stand": "razstavni prostor" },
+        "UA": { "shopfitter": "торгове обладнання", "lightbox": "лайтбокс", "retail design": "дизайн магазину", "shopfitting": "облаштування магазину", "signage": "вивіски", "sign": "вивіска", "profile": "профіль", "fabric": "тканина", "stand": "виставковий стенд" },
+        "IS": { "shopfitter": "verslanainnréttingar", "lightbox": "ljósakassi", "retail design": "verslanahönnun", "shopfitting": "verslanabúnaður", "signage": "skilti", "sign": "skilti", "profile": "prófíl", "fabric": "efni", "stand": "sýningarbás" },
+        "MK": { "shopfitter": "опрема за продавници", "lightbox": "светлечка реклама", "retail design": "дизајн на продавници", "shopfitting": "уредување на продавници", "signage": "ознаки", "sign": "натпис", "profile": "профил", "fabric": "ткаенина", "stand": "изложбен штанд" }
     }
 
     col_left, col_right = st.columns([1, 2])
