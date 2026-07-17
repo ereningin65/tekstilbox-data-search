@@ -39,7 +39,7 @@ def check_password():
                 st.error("❌ Hatalı kullanıcı adı veya şifre!")
     return False
 
-# Web sitesi bulma fonksiyonu (SerpApi ile web sitesini Google'dan dolaylı bulur)
+# Web sitesi bulma fonksiyonu
 def find_company_website(company_name, country_code, api_key):
     try:
         search_url = "https://serpapi.com/search"
@@ -70,7 +70,7 @@ if check_password():
     )
     
     st.sidebar.markdown("---")
-    st.sidebar.info("Tüm Avrupa Sürümü: 40+ Avrupa ülkesi, yerel LinkedIn subdomainleri, 100 sayfa tarama ve gelişmiş dil kütüphanesi aktif.")
+    st.sidebar.info("Tüm Avrupa Sürümü: 40+ Avrupa ülkesi, manuel kelime girişi, 100 sayfa tarama ve gelişmiş dil kütüphanesi aktif.")
 
     st.title("🎯 Tekstilbox & EasyExpo B2B Arama Motoru")
 
@@ -158,7 +158,7 @@ if check_password():
     col_left, col_right = st.columns([1, 2])
 
     with col_left:
-        # Tüm Avrupa ülkeleri listeleniyor
+        # 1. Ülke Seçimi
         selected_country_name = st.selectbox(
             "1. Hedef Ülke Seçin", 
             list(EUROPEAN_COUNTRIES.keys())
@@ -167,6 +167,7 @@ if check_password():
         country_code = country_info["code"]
         linkedin_subdomain = country_info["domain"]
 
+        # 2. Hedef Kitle Seçimi
         hedef_kitle = st.selectbox(
             "2. Hedef Kitle Seçin", 
             ["Shopfitter", "Signage/Sign", "Producer", "Print house", "Modular Exhibition Systems"]
@@ -195,16 +196,25 @@ if check_password():
             elif moduler_type == "EES":
                 keywords_to_search = st.multiselect("Sistem Seçenekleri", ["Modular Exhibition Systems", "Modular Expo Systems", "Stand"])
 
+        # 3. YENİ ÖZELLİK: Manuel Kelime Girişi
+        st.markdown("---")
+        custom_keyword = st.text_input("➕ Kendi Kelimenizi Yazın (Opsiyonel)", placeholder="Örn: display, akrilik, ahşap...")
+
     with col_right:
         st.subheader("🔍 Arama Bilgileri ve Önizleme")
         
-        if not keywords_to_search:
-            st.warning("Lütfen sol taraftan en az bir anahtar kelime seçin.")
+        # Seçilen hazır kelimeler ve kullanıcının yazdığı özel kelimeyi birleştir
+        final_keywords = list(keywords_to_search)
+        if custom_keyword.strip():
+            final_keywords.append(custom_keyword.strip())
+        
+        if not final_keywords:
+            st.warning("Lütfen sol taraftan en az bir hazır anahtar kelime seçin veya kendi kelimenizi yazın.")
         else:
             query_parts = []
             local_dict = LOCAL_DICTIONARY.get(country_code, {})
             
-            for kw in keywords_to_search:
+            for kw in final_keywords:
                 local_kw = local_dict.get(kw.lower())
                 if local_kw and local_kw != kw.lower():
                     query_parts.append(f'("{kw}" OR "{local_kw}")')
@@ -222,7 +232,6 @@ if check_password():
                     st.info("🔄 Google verileri derinlemesine taranıyor. Çoklu sayfalar taranacağı için bu işlem 15-30 saniye sürebilir...")
                     
                     leads = []
-                    # 100 sonuca ulaşmak için Google'ın ilk 3 sayfasını (0, 10, 20 parametreleriyle) tarıyoruz
                     for page in range(0, 3):
                         url = "https://serpapi.com/search"
                         params = {
@@ -274,7 +283,6 @@ if check_password():
                         st.success(f"🎉 Başarılı! Toplam {len(df)} adet potansiyel firma listelendi.")
                         st.dataframe(df, use_container_width=True)
                         
-                        # Excel'i bellekte profesyonelce biçimlendirme
                         output = BytesIO()
                         with pd.ExcelWriter(output, engine='openpyxl') as writer:
                             df.to_excel(writer, index=False, sheet_name="Müşteri Listesi")
